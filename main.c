@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "server.h"
+
 int main(int argc, char *argv[]) {
 
     if (argc != 3) {
@@ -11,8 +13,7 @@ int main(int argc, char *argv[]) {
     int port = atoi(argv[1]);
     char *directory = argv[2];
     
-    printf("Puerto: %d\n", port);
-    printf("Directorio: %s\n", directory);
+    start_server(port, directory);
 
     return 0;
 }
