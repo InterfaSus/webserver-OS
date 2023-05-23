@@ -52,7 +52,7 @@ int start_server(int port, char *directory) {
         }
 
         char response[MAX_PAGE_SIZE];
-        generate_page(default_dir, response);
+        generate_page(default_dir, "/", response);
 
         // Enviar la respuesta básica al cliente
         write(newsockfd, response, strlen(response));
