@@ -5,16 +5,18 @@
 #include <netinet/in.h>
 #include <unistd.h>
 
-int default_port = 8080;
+#include "page.h"
+#include "constants.h"
+
+char *default_dir;
 
 int start_server(int port, char *directory) {
 
-    default_port = port;
+    default_dir = directory;
 
     int sockfd, newsockfd;
     socklen_t clilen;
     struct sockaddr_in serv_addr, cli_addr;
-    char response[] = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<h1>Hola desde el servidor web!</h1>";
 
     // Crear un socket
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -49,8 +51,11 @@ int start_server(int port, char *directory) {
             exit(1);
         }
 
+        char response[MAX_PAGE_SIZE];
+        generate_page(default_dir, response);
+
         // Enviar la respuesta básica al cliente
-        write(newsockfd, response, sizeof(response) - 1);
+        write(newsockfd, response, strlen(response));
 
         // Cerrar la conexión entrante
         close(newsockfd);

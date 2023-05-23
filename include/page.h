@@ -1,0 +1,1 @@
+void generate_page(char *directory, char response[]);

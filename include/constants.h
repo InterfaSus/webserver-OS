@@ -1,0 +1,3 @@
+#define MAX_PAGE_SIZE 262144
+#define MAX_FILES 1000
+#define MAX_ROW_SIZE 512
