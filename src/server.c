@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <ifaddrs.h>
+#include <sys/wait.h>
 
 #include "routing.h"
 #include "constants.h"
@@ -86,56 +87,71 @@ int start_server(int port, char *directory) {
             exit(1);
         }
 
-        // Leer la solicitud del cliente
-        char request[MAX_REQUEST_SIZE];
-        memset(request, 0, sizeof(request));
-        ssize_t bytesRead = read(newsockfd, request, sizeof(request)-1);
-        if (bytesRead < 0) {
-            perror("Error al leer la solicitud del cliente");
+        // Crear un proceso hijo para manejar la conexión
+        pid_t pid = fork();
+        if (pid == 0) {
+            // Proceso hijo: manejar la conexión
+            close(sockfd);  // Cerrar el socket en el proceso hijo
+
+            // Leer la solicitud del cliente
+            char request[MAX_REQUEST_SIZE];
+            memset(request, 0, sizeof(request));
+            ssize_t bytesRead = read(newsockfd, request, sizeof(request)-1);
+            if (bytesRead < 0) {
+                perror("Error al leer la solicitud del cliente");
+                exit(1);
+            }
+
+            // Imprimir la solicitud del cliente
+            printf("Solicitud del cliente:\n\n%s\n", request);
+
+            char *requestLine = strtok(request, "\r\n"); // Obtener la primera línea de la petición
+            char *method = strtok(requestLine, " "); // Obtener el método HTTP (GET, POST, etc.)
+            char *path = strtok(NULL, " "); // Obtener la dirección de la petición
+
+            char response[MAX_PAGE_SIZE];
+            FILE *file;
+            int isDownload = router(main_directory, path, response);
+
+            // Enviar la respuesta básica al cliente
+            write(newsockfd, response, strlen(response));
+
+            // Enviar el archivo al cliente
+            if (isDownload == 1) {
+
+                char full_dir[MAX_FILE_ROUTE];
+                sprintf(full_dir, "%s%s", main_directory, path);
+                urlDecode(full_dir);
+                FILE *file = fopen(full_dir, "rb");
+
+                char buffer[DOWNLOAD_CHUNK_SIZE];
+                memset(buffer, 0, sizeof(buffer));
+                if (file == NULL) {
+                    perror("Error al abrir el archivo");
+                    exit(1);
+                }
+                while (1) {
+                    size_t bytesRead = fread(buffer, 1, sizeof(buffer), file);
+                    if (bytesRead <= 0) {
+                        break;
+                    }
+
+                    write(newsockfd, buffer, bytesRead);
+                }
+
+                fclose(file);
+            }
+
+            close(newsockfd);  // Cerrar la conexión en el proceso hijo
+            exit(0);  // Salir del proceso hijo
+        } else if (pid < 0) {
+            perror("Error al crear el proceso hijo");
             exit(1);
         }
 
-        // Imprimir la solicitud del cliente
-        printf("Solicitud del cliente:\n\n%s\n", request);
+        // Proceso padre: continuar aceptando conexiones
 
-        char *requestLine = strtok(request, "\r\n"); // Obtener la primera línea de la petición
-        char *method = strtok(requestLine, " "); // Obtener el método HTTP (GET, POST, etc.)
-        char *path = strtok(NULL, " "); // Obtener la dirección de la petición
-
-        char response[MAX_PAGE_SIZE];
-        FILE *file;
-        int isDownload = router(main_directory, path, response);
-
-        // Enviar la respuesta básica al cliente
-        write(newsockfd, response, strlen(response));
-
-        // Enviar el archivo al cliente
-        if (isDownload == 1) {
-
-            char full_dir[MAX_FILE_ROUTE];
-            sprintf(full_dir, "%s%s", main_directory, path);
-            urlDecode(full_dir);
-            FILE *file = fopen(full_dir, "rb");
-
-            char buffer[DOWNLOAD_CHUNK_SIZE];
-            memset(buffer, 0, sizeof(buffer));
-            if (file == NULL) {
-                perror("Error al abrir el archivo");
-                exit(1);
-            }
-            while (1) {
-                size_t bytesRead = fread(buffer, 1, sizeof(buffer), file);
-                if (bytesRead <= 0) {
-                    break;
-                }
-
-                write(newsockfd, buffer, bytesRead);
-            }
-
-            fclose(file);
-        }
-
-        // Cerrar la conexión entrante
+        // Cerrar la conexión en el proceso padre, ya que el proceso hijo se hará cargo de ella
         close(newsockfd);
     }
 
