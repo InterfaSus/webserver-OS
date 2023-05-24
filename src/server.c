@@ -4,6 +4,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <arpa/inet.h>
+#include <ifaddrs.h>
 
 #include "page.h"
 #include "constants.h"
@@ -37,9 +39,33 @@ int start_server(int port, char *directory) {
         exit(1);
     }
 
+    // Obtener la dirección IP del servidor
+    struct ifaddrs *ifaddr, *ifa;
+    if (getifaddrs(&ifaddr) == -1) {
+        perror("Error al obtener la dirección IP de la interfaz de red");
+        exit(1);
+    }
+
+    char local_ip[INET_ADDRSTRLEN];
+    memset(local_ip, 0, sizeof(local_ip));
+
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+        if (ifa->ifa_addr != NULL && ifa->ifa_addr->sa_family == AF_INET) {
+            struct sockaddr_in *sa = (struct sockaddr_in *) ifa->ifa_addr;
+            inet_ntop(AF_INET, &(sa->sin_addr), local_ip, INET_ADDRSTRLEN);
+            if (strcmp(ifa->ifa_name, "lo") != 0) {
+                break;  // Se encontró una interfaz de red diferente a "lo" (loopback)
+            }
+        }
+    }
+
+    freeifaddrs(ifaddr);
+
     // Escuchar en el socket
     listen(sockfd, 5);
-    printf("Servidor escuchando en el puerto %d...\n", port);
+    printf("\nServidor escuchando en el puerto %d...\n\n", port);
+    printf("Conectarse localmente: http://localhost:%d\n", port);
+    printf("Red local: http://%s:%d\n\n", local_ip, port);
 
     while (1) {
         clilen = sizeof(cli_addr);
@@ -51,8 +77,24 @@ int start_server(int port, char *directory) {
             exit(1);
         }
 
+        // Leer la solicitud del cliente
+        char request[1024];
+        memset(request, 0, sizeof(request));
+        ssize_t bytesRead = read(newsockfd, request, sizeof(request)-1);
+        if (bytesRead < 0) {
+            perror("Error al leer la solicitud del cliente");
+            exit(1);
+        }
+
+        // Imprimir la solicitud del cliente
+        printf("Solicitud del cliente:\n\n%s\n", request);
+
+        char *requestLine = strtok(request, "\r\n"); // Obtener la primera línea de la petición
+        char *method = strtok(requestLine, " "); // Obtener el método HTTP (GET, POST, etc.)
+        char *path = strtok(NULL, " "); // Obtener la dirección de la petición
+
         char response[MAX_PAGE_SIZE];
-        generate_page(default_dir, "/", response);
+        generate_page(default_dir, path, response);
 
         // Enviar la respuesta básica al cliente
         write(newsockfd, response, strlen(response));

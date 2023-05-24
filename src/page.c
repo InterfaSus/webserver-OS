@@ -14,13 +14,30 @@ int compare(const struct dirent **a, const struct dirent **b) {
 }
 
 
-void generate_page(char *directory, char *relative, char response[]) {
+void generate_page(char *main_directory, char *relative, char response[]) {
+
+    if (strcmp(relative, "/favicon.ico") == 0) return;
 
     char header[] = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
 
-    char body[MAX_PAGE_SIZE];
+    char back_addr[MAX_FILE_ROUTE];
+    strcpy(back_addr, relative);
+    for (int i = strlen(back_addr) - 1; i >= 0; i--) {
+        if (back_addr[i] == '/') {
+            back_addr[i] = '\0';
+            break;
+        }
+    }
 
-        sprintf(body,
+    char back[MAX_FILE_ROUTE + 100];
+    sprintf(back,
+        "<tr>"
+            "<td><a href=\"%s\">Directorio Padre</a></td>"
+        "</tr>",
+        strlen(back_addr) == 0 ? "/" : back_addr);
+
+    char body[MAX_PAGE_SIZE];
+    sprintf(body,
         "<!DOCTYPE html>"
         "<html>"
             "<head>"
@@ -33,9 +50,11 @@ void generate_page(char *directory, char *relative, char response[]) {
                     "<tr>"
                         "<th>Nombre</th>"
                         "<th>Tamaño</th>"
-                        "<th>Fecha de Modificación</th>",
-        directory, relative);
-        
+                        "<th>Fecha de Modificación</th>"
+                    "</tr>"
+                    "%s",
+        main_directory, relative, strcmp(relative, "/") == 0 ? "" : back);
+            
 
     char closure[] = "<tr>"
                 "<table>"
@@ -54,8 +73,11 @@ void generate_page(char *directory, char *relative, char response[]) {
     time_t folder_dates[MAX_FILES];
     int n_folders = 0;
 
+    char full_dir[MAX_FILE_ROUTE];
+    sprintf(full_dir, "%s%s", main_directory, relative);
+
     // Abrir el directorio
-    num_entries = scandir(directory, &namelist, NULL, compare);
+    num_entries = scandir(full_dir, &namelist, NULL, compare);
     if (num_entries == -1) {
         printf("No se pudo abrir el directorio.\n");
         return;
@@ -71,8 +93,8 @@ void generate_page(char *directory, char *relative, char response[]) {
         }
         
         // Obtener la fecha de modificación y el tamaño del archivo
-        char ruta[MAX_FILE_ROUTE];
-        snprintf(ruta, sizeof(ruta), "%s/%s", directory, ent->d_name);
+        char ruta[2 * MAX_FILE_ROUTE];
+        snprintf(ruta, sizeof(ruta), "%s/%s", full_dir, ent->d_name);
         struct stat atributos;
         if (stat(ruta, &atributos) == 0) {
             // Si el elemento no es una carpeta, almacenar su tamaño
@@ -106,7 +128,7 @@ void generate_page(char *directory, char *relative, char response[]) {
         char element[MAX_ROW_SIZE];
         char item_route[MAX_FILE_ROUTE];
 
-        sprintf(item_route, "%s/%s", relative, file_names[i]);
+        sprintf(item_route, "%s/%s", strcmp(relative, "/") == 0 ? "" : relative, file_names[i]);
 
         sprintf(element,
             "<tr>"
@@ -128,7 +150,7 @@ void generate_page(char *directory, char *relative, char response[]) {
         char element[MAX_ROW_SIZE];
         char item_route[MAX_FILE_ROUTE];
 
-        sprintf(item_route, "%s/%s", relative, folder_names[i]);
+        sprintf(item_route, "%s/%s", strcmp(relative, "/") == 0 ? "" : relative, folder_names[i]);
 
         sprintf(element,
             "<tr>"
@@ -140,7 +162,6 @@ void generate_page(char *directory, char *relative, char response[]) {
         
         strcat(body, element);
     }
-
 
     // Liberar la memoria asignada a los nombres de archivos en la lista
     for (int i = 0; i < n_files; i++) {
