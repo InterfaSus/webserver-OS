@@ -9,6 +9,7 @@
 
 #include "routing.h"
 #include "constants.h"
+#include "string_helpers.h"
 
 char *main_directory;
 int sockfd;
@@ -102,10 +103,37 @@ int start_server(int port, char *directory) {
         char *path = strtok(NULL, " "); // Obtener la dirección de la petición
 
         char response[MAX_PAGE_SIZE];
-        router(main_directory, path, response);
+        FILE *file;
+        int isDownload = router(main_directory, path, response);
 
         // Enviar la respuesta básica al cliente
         write(newsockfd, response, strlen(response));
+
+        // Enviar el archivo al cliente
+        if (isDownload == 1) {
+
+            char full_dir[MAX_FILE_ROUTE];
+            sprintf(full_dir, "%s%s", main_directory, path);
+            urlDecode(full_dir);
+            FILE *file = fopen(full_dir, "rb");
+
+            char buffer[DOWNLOAD_CHUNK_SIZE];
+            memset(buffer, 0, sizeof(buffer));
+            if (file == NULL) {
+                perror("Error al abrir el archivo");
+                exit(1);
+            }
+            while (1) {
+                size_t bytesRead = fread(buffer, 1, sizeof(buffer), file);
+                if (bytesRead <= 0) {
+                    break;
+                }
+
+                write(newsockfd, buffer, bytesRead);
+            }
+
+            fclose(file);
+        }
 
         // Cerrar la conexión entrante
         close(newsockfd);

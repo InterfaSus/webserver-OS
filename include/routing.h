@@ -1,1 +1,1 @@
-void router(char *main_directory, char *relative, char response[]);
+int router(char *main_directory, char *relative, char response[]);

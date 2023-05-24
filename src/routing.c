@@ -7,7 +7,7 @@
 #include "page.h"
 #include "string_helpers.h"
 
-void router(char *main_directory, char *relative, char response[]) {
+int router(char *main_directory, char *relative, char response[]) {
 
     char full_dir[MAX_FILE_ROUTE];
     sprintf(full_dir, "%s%s", main_directory, relative);
@@ -18,14 +18,38 @@ void router(char *main_directory, char *relative, char response[]) {
     if (stat(full_dir, &st) == -1) {
         printf("Error al obtener los atributos del archivo %s\n", full_dir);
         // Enviar error 404
-        return;
+        return 0;
     }
 
     // Revisar si es un archivo
     if (!S_ISDIR(st.st_mode)) {
-        printf("Es un archivo!. Descargar\n");
+        
+        FILE *file = fopen(full_dir, "rb");
+        if (file == NULL) {
+            printf("Error al abrir el archivo %s\n", full_dir);
+            // Enviar error 500 algo
+            return 0;
+        }
+
+        // Obtener el tamaño del archivo
+        fseek(file, 0, SEEK_END);
+        long fileSize = ftell(file);
+        fseek(file, 0, SEEK_SET);
+
+        // Crear las cabeceras HTTP
+        sprintf(response, "HTTP/1.1 200 OK\r\n");
+        sprintf(response + strlen(response), "Content-Disposition: attachment; filename=\"%s\"\r\n", full_dir);
+        sprintf(response + strlen(response), "Content-Type: application/octet-stream\r\n");
+        sprintf(response + strlen(response), "Content-Length: %ld\r\n", fileSize);
+        sprintf(response + strlen(response), "\r\n");
+
+        fclose(file);
+
+        return 1;
     }
     else { // Es una carpeta
         generate_page(full_dir, relative, response);
     }
+
+    return 0;
 }
