@@ -30,3 +30,32 @@ void bytes_to_string(int file_size, char buffer[]) {
 
     sprintf(buffer, "%s%c", size_buf, suffix);
 }
+
+char hexToChar(char *hex) {
+    char c;
+    sscanf(hex, "%2hhx", &c);
+    return c;
+}
+
+void urlDecode(char *url) {
+    int len = strlen(url);
+    char *decoded = (char *)malloc(len + 1);
+    int i, j = 0;
+    
+    for (i = 0; i < len; i++) {
+        if (url[i] == '%' && i + 2 < len) {
+            decoded[j++] = hexToChar(&url[i + 1]);
+            i += 2;
+        } else if (url[i] == '+') {
+            decoded[j++] = ' ';
+        } else {
+            decoded[j++] = url[i];
+        }
+    }
+    
+    decoded[j] = '\0';
+    
+    strcpy(url, decoded);
+    
+    free(decoded);
+}

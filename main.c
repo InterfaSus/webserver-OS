@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 
 #include "server.h"
 
@@ -13,6 +14,8 @@ int main(int argc, char *argv[]) {
     int port = atoi(argv[1]);
     char *directory = argv[2];
     
+    signal(SIGINT, sigint_handler);
+
     start_server(port, directory);
 
     return 0;

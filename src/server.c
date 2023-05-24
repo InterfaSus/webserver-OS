@@ -11,12 +11,20 @@
 #include "constants.h"
 
 char *main_directory;
+int sockfd;
+
+void sigint_handler(int sig) {
+
+    printf("\n\nCerrando el servidor...\n");
+    close(sockfd);
+    exit(0);
+}
 
 int start_server(int port, char *directory) {
 
     main_directory = directory;
 
-    int sockfd, newsockfd;
+    int newsockfd;
     socklen_t clilen;
     struct sockaddr_in serv_addr, cli_addr;
 
@@ -78,7 +86,7 @@ int start_server(int port, char *directory) {
         }
 
         // Leer la solicitud del cliente
-        char request[1024];
+        char request[MAX_REQUEST_SIZE];
         memset(request, 0, sizeof(request));
         ssize_t bytesRead = read(newsockfd, request, sizeof(request)-1);
         if (bytesRead < 0) {

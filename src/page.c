@@ -14,7 +14,7 @@ int compare(const struct dirent **a, const struct dirent **b) {
 }
 
 
-void generate_page(char *main_directory, char *relative, char response[]) {
+void generate_page(char *full_dir, char *relative, char response[]) {
 
     if (strcmp(relative, "/favicon.ico") == 0) return;
 
@@ -28,6 +28,10 @@ void generate_page(char *main_directory, char *relative, char response[]) {
             break;
         }
     }
+
+    char relative_copy[MAX_FILE_ROUTE];
+    strcpy(relative_copy, relative);
+    urlDecode(relative_copy);
 
     char back[MAX_FILE_ROUTE + 100];
     sprintf(back,
@@ -53,7 +57,7 @@ void generate_page(char *main_directory, char *relative, char response[]) {
                         "<th>Fecha de Modificación</th>"
                     "</tr>"
                     "%s",
-        relative, relative, strcmp(relative, "/") == 0 ? "" : back);
+        relative_copy, relative_copy, strcmp(relative, "/") == 0 ? "" : back);
             
 
     char closure[] = "<tr>"
@@ -72,9 +76,6 @@ void generate_page(char *main_directory, char *relative, char response[]) {
     char *folder_names[MAX_FILES];
     time_t folder_dates[MAX_FILES];
     int n_folders = 0;
-
-    char full_dir[MAX_FILE_ROUTE];
-    sprintf(full_dir, "%s%s", main_directory, relative);
 
     // Abrir el directorio
     num_entries = scandir(full_dir, &namelist, NULL, compare);
