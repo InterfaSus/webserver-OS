@@ -41,7 +41,7 @@ void generate_page(char *main_directory, char *relative, char response[]) {
         "<!DOCTYPE html>"
         "<html>"
             "<head>"
-                "<title>Directorio %s</title>"
+                "<title>Index of %s</title>"
                 "<meta charset=\"UTF-8\">"
             "</head>"
             "<body>"
@@ -53,7 +53,7 @@ void generate_page(char *main_directory, char *relative, char response[]) {
                         "<th>Fecha de Modificación</th>"
                     "</tr>"
                     "%s",
-        main_directory, relative, strcmp(relative, "/") == 0 ? "" : back);
+        relative, relative, strcmp(relative, "/") == 0 ? "" : back);
             
 
     char closure[] = "<tr>"

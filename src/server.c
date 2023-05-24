@@ -7,14 +7,14 @@
 #include <arpa/inet.h>
 #include <ifaddrs.h>
 
-#include "page.h"
+#include "routing.h"
 #include "constants.h"
 
-char *default_dir;
+char *main_directory;
 
 int start_server(int port, char *directory) {
 
-    default_dir = directory;
+    main_directory = directory;
 
     int sockfd, newsockfd;
     socklen_t clilen;
@@ -94,7 +94,7 @@ int start_server(int port, char *directory) {
         char *path = strtok(NULL, " "); // Obtener la dirección de la petición
 
         char response[MAX_PAGE_SIZE];
-        generate_page(default_dir, path, response);
+        router(main_directory, path, response);
 
         // Enviar la respuesta básica al cliente
         write(newsockfd, response, strlen(response));
