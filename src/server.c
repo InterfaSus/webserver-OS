@@ -117,12 +117,13 @@ int start_server(int port, char *directory) {
             write(newsockfd, response, strlen(response));
 
             // Enviar el archivo al cliente
-            if (isDownload == 1) {
+            if (isDownload >= 1) {
 
-                char full_dir[MAX_FILE_ROUTE];
-                sprintf(full_dir, "%s%s", main_directory, path);
-                urlDecode(full_dir);
-                FILE *file = fopen(full_dir, "rb");
+                char file_dir[MAX_FILE_ROUTE];
+                sprintf(file_dir, "%s%s", isDownload == 1 ? main_directory : "./public", path);
+                urlDecode(file_dir);
+
+                FILE *file = fopen(file_dir, "rb");
 
                 char buffer[DOWNLOAD_CHUNK_SIZE];
                 memset(buffer, 0, sizeof(buffer));

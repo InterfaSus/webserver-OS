@@ -21,6 +21,35 @@ int router(char *main_directory, char *relative, char response[]) {
     sprintf(full_dir, "%s%s", main_directory, relative);
     urlDecode(full_dir);
 
+    char inPublic[MAX_FILE_ROUTE];
+    sprintf(inPublic, "./public%s", relative);
+    urlDecode(inPublic);
+
+    // Revisar si el archivo existe y no es una carpeta
+    struct stat st_p;
+    if (stat(inPublic, &st_p) != -1 && !S_ISDIR(st_p.st_mode)) {
+
+        FILE *file = fopen(inPublic, "rb");
+        if (file != NULL) {
+
+            // Obtener el tamaño del archivo
+            fseek(file, 0, SEEK_END);
+            long fileSize = ftell(file);
+            fseek(file, 0, SEEK_SET);
+
+            // Crear las cabeceras HTTP
+            sprintf(response, "HTTP/1.1 200 OK\r\n");
+            sprintf(response + strlen(response), "Content-Disposition: attachment; filename=\"%s\"\r\n", inPublic);
+            sprintf(response + strlen(response), "Content-Type: application/octet-stream\r\n");
+            sprintf(response + strlen(response), "Content-Length: %ld\r\n", fileSize);
+            sprintf(response + strlen(response), "\r\n");
+
+            fclose(file);
+        }
+
+        return 2;
+    }
+
     // Revisar si el directorio existe
     struct stat st;
     if (stat(full_dir, &st) == -1) {

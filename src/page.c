@@ -47,6 +47,7 @@ void generate_page(char *full_dir, char *relative, char response[]) {
             "<head>"
                 "<title>Index of %s</title>"
                 "<meta charset=\"UTF-8\">"
+                "<script src=\"/js/index.js\"></script>"
             "</head>"
             "<body>"
                 "<h1>Index of %s</h1>"
