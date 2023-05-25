@@ -55,6 +55,8 @@ void generate_page(char *full_dir, char *relative, char response[]) {
                         "<th>Nombre</th>"
                         "<th>Tamaño</th>"
                         "<th>Fecha de Modificación</th>"
+                        "<th>Tipo</th>"
+                        "<th>Permisos</th>"
                     "</tr>"
                     "%s",
         relative_copy, relative_copy, strcmp(relative, "/") == 0 ? "" : back);
@@ -71,10 +73,12 @@ void generate_page(char *full_dir, char *relative, char response[]) {
     char *file_names[MAX_FILES];
     time_t file_dates[MAX_FILES];
     int file_sizes[MAX_FILES];
+    char file_permissions[MAX_FILES][10];
     int n_files = 0;
 
     char *folder_names[MAX_FILES];
     time_t folder_dates[MAX_FILES];
+    char folder_permissions[MAX_FILES][10];
     int n_folders = 0;
 
     // Abrir el directorio
@@ -98,18 +102,36 @@ void generate_page(char *full_dir, char *relative, char response[]) {
         snprintf(ruta, sizeof(ruta), "%s/%s", full_dir, ent->d_name);
         struct stat atributos;
         if (stat(ruta, &atributos) == 0) {
+            
+            mode_t permisos = atributos.st_mode;
+            char permissions[10];
+            
+            permissions[0] = (permisos & S_IRUSR) ? 'r' : '-';
+            permissions[1] = (permisos & S_IWUSR) ? 'w' : '-';
+            permissions[2] = (permisos & S_IXUSR) ? 'x' : '-';
+            permissions[3] = (permisos & S_IRGRP) ? 'r' : '-';
+            permissions[4] = (permisos & S_IWGRP) ? 'w' : '-';
+            permissions[5] = (permisos & S_IXGRP) ? 'x' : '-';
+            permissions[6] = (permisos & S_IROTH) ? 'r' : '-';
+            permissions[7] = (permisos & S_IWOTH) ? 'w' : '-';
+            permissions[8] = (permisos & S_IXOTH) ? 'x' : '-';
+            permissions[9] = '\0';
+            
             // Si el elemento no es una carpeta, almacenar su tamaño
             if (!S_ISDIR(atributos.st_mode)) {
 
                 file_names[n_files] = strdup(ent->d_name);
                 file_sizes[n_files] = atributos.st_size;
                 file_dates[n_files] = atributos.st_mtime;
+                sprintf(file_permissions[n_files], "%s", permissions);
+                
                 n_files++;
             }
             else {
 
                 folder_names[n_folders] = strdup(ent->d_name);
                 folder_dates[n_folders] = atributos.st_mtime;
+                sprintf(folder_permissions[n_folders], "%s", permissions);
                 n_folders++;
             }
         }
@@ -128,6 +150,15 @@ void generate_page(char *full_dir, char *relative, char response[]) {
 
         char element[MAX_ROW_SIZE];
         char item_route[MAX_FILE_ROUTE];
+        char extension[50];
+
+        char *extension_ptr = strrchr(file_names[i], '.');
+        if (extension_ptr != NULL) {
+            strcpy(extension, extension_ptr);
+        }
+        else {
+            strcpy(extension, "");
+        }
 
         sprintf(item_route, "%s/%s", strcmp(relative, "/") == 0 ? "" : relative, file_names[i]);
 
@@ -136,8 +167,10 @@ void generate_page(char *full_dir, char *relative, char response[]) {
                 "<td><a href=\"%s\">%s</a></td>"
                 "<td>%s</td>"
                 "<td>%s</td>"
+                "<td>Archivo %s</th>"
+                "<td>%s</th>"
             "</tr>",
-            item_route, file_names[i], size_buff, time_buff);
+            item_route, file_names[i], size_buff, time_buff, extension, file_permissions[i]);
         
         strcat(body, element);
     }
@@ -158,8 +191,10 @@ void generate_page(char *full_dir, char *relative, char response[]) {
                 "<td><a href=\"%s\">%s</a></td>"
                 "<td>-</td>"
                 "<td>%s</td>"
+                "<td>Carpeta</th>"
+                "<td>%s</th>"
             "</tr>",
-            item_route, folder_names[i], time_buff);
+            item_route, folder_names[i], time_buff, folder_permissions[i]);
         
         strcat(body, element);
     }
