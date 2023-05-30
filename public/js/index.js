@@ -94,8 +94,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function getFactor(size)
     {
+        //Si es Terabyte
+        if (size.endsWith("T")) {
+            return 1000000000000;
+        }
         //Si es Gigabyte
-        if (size.endsWith("G")) {
+        else if (size.endsWith("G")) {
             return 1000000000;
         }
         //Si es Megabyte
