@@ -1,4 +1,3 @@
-console.log("Holaaaa");
 
 document.addEventListener("DOMContentLoaded", function () {
     
@@ -28,11 +27,11 @@ document.addEventListener("DOMContentLoaded", function () {
         SortTable();
     });
 
-    //Ordenar por tamaño, si termina en K (kilobyte) poner de primero, luego los que no terminen en letra, y luego los que solo sean - (no tienen tamaño)
+    //Ordenar por tamaño
     sizeHeader.addEventListener('click', function () {
         rows.sort(function(a, b) {
-            var aSize = (a.cells[0] ? a.cells[1].textContent : '');
-            var bSize = (b.cells[0] ? b.cells[1].textContent : '');
+            var aSize = (a.cells[1] ? a.cells[1].textContent : '');
+            var bSize = (b.cells[1] ? b.cells[1].textContent : '');
             if (aSize == "-") {
                 return 1;
             } else if (bSize == "-") {
@@ -54,8 +53,8 @@ document.addEventListener("DOMContentLoaded", function () {
     //Ordenar por fecha
     dateHeader.addEventListener('click', function () {
         rows.sort(function(a, b) {
-            var aDate = (a.cells[0] ? a.cells[2].textContent : '');
-            var bDate = (b.cells[0] ? b.cells[2].textContent : '');
+            var aDate = (a.cells[2] ? a.cells[2].textContent : '');
+            var bDate = (b.cells[2] ? b.cells[2].textContent : '');
             return aDate.localeCompare(bDate);
         });
 
@@ -65,19 +64,20 @@ document.addEventListener("DOMContentLoaded", function () {
     //Ordenar por tipo
     typeHeader.addEventListener('click', function () {
         rows.sort(function(a, b) {
-            var aType = (a.cells[0] ? a.cells[3].textContent : '');
-            var bType = (b.cells[0] ? b.cells[3].textContent : '');
+            var aType = (a.cells[3] ? a.cells[3].textContent : '');
+            var bType = (b.cells[3] ? b.cells[3].textContent : '');
             return aType.localeCompare(bType);
         });
         
+        console.log("Tipos");
         SortTable();
     });
 
     //Ordenar por permisos
     ownerHeader.addEventListener('click', function () {
         rows.sort(function(a, b) {
-            var aOwner = (a.cells[0] ? a.cells[4].textContent : '');
-            var bOwner = (b.cells[0] ? b.cells[4].textContent : '');
+            var aOwner = (a.cells[4] ? a.cells[4].textContent : '');
+            var bOwner = (b.cells[4] ? b.cells[4].textContent : '');
             return aOwner.localeCompare(bOwner);
         });
 
@@ -106,6 +106,8 @@ document.addEventListener("DOMContentLoaded", function () {
         else if (size.endsWith("K")) {
             return 1000;
         }
+
+        return 1;
     }
 
 });
