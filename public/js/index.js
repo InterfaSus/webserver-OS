@@ -8,23 +8,29 @@ document.addEventListener("DOMContentLoaded", function () {
     var rows = rows.slice(1)
     
     
-    var nameHeader = document.querySelector('th:nth-child(1):not([colspan])');
-    var sizeHeader = document.querySelector('th:nth-child(2):not([colspan])');
-    var dateHeader = document.querySelector('th:nth-child(3):not([colspan])');
-    var typeHeader = document.querySelector('th:nth-child(4):not([colspan])');
-    var ownerHeader = document.querySelector('th:nth-child(5):not([colspan])');
+    var nameHeader = document.querySelector('th:nth-child(1):not([colspan])');  //0
+    var sizeHeader = document.querySelector('th:nth-child(2):not([colspan])');  //1
+    var dateHeader = document.querySelector('th:nth-child(3):not([colspan])');  //2
+    var typeHeader = document.querySelector('th:nth-child(4):not([colspan])');  //3
+    var ownerHeader = document.querySelector('th:nth-child(5):not([colspan])'); //4
+
+    var currentStatus = -1;
+    var isInverse = true;
 
     console.log(nameHeader);
     
     //Ordenar por nombre
-    nameHeader.addEventListener('click', function () {
+    nameHeader.addEventListener('click', function () { 
         rows.sort(function(a, b) {
             var aName = (a.cells[0] ? a.cells[0].textContent : '');
             var bName = (b.cells[0] ? b.cells[0].textContent : '');
             return aName.localeCompare(bName);
         });
 
-        SortTable();
+        if(currentStatus == 0 && !isInverse) InverseSortTable();
+        else SortTable();
+
+        currentStatus = 0;
     });
 
     //Ordenar por tamaño
@@ -47,7 +53,10 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        SortTable();
+        if(currentStatus == 1 && !isInverse) InverseSortTable();
+        else SortTable();
+
+        currentStatus = 1;
     });
 
     //Ordenar por fecha
@@ -58,7 +67,10 @@ document.addEventListener("DOMContentLoaded", function () {
             return aDate.localeCompare(bDate);
         });
 
-        SortTable();
+        if(currentStatus == 2 && !isInverse) InverseSortTable();
+        else SortTable();
+
+        currentStatus = 2;
     });
 
     //Ordenar por tipo
@@ -69,8 +81,10 @@ document.addEventListener("DOMContentLoaded", function () {
             return aType.localeCompare(bType);
         });
         
-        console.log("Tipos");
-        SortTable();
+        if(currentStatus == 3 && !isInverse) InverseSortTable();
+        else SortTable();
+
+        currentStatus = 3;
     });
 
     //Ordenar por permisos
@@ -81,7 +95,10 @@ document.addEventListener("DOMContentLoaded", function () {
             return aOwner.localeCompare(bOwner);
         });
 
-        SortTable();
+        if(currentStatus == 4 && !isInverse) InverseSortTable();
+        else SortTable();
+
+        currentStatus = 4;
     });
 
     function SortTable(){
@@ -90,8 +107,20 @@ document.addEventListener("DOMContentLoaded", function () {
         for (var i = 0; i < rows.length; i++) {
             table.appendChild(rows[i]);
         }
+
+        isInverse = false;
     }
 
+    function InverseSortTable(){
+        table.innerHTML = "";
+        table.appendChild(headers);
+        for (var i = rows.length-1; i >= 0; i--) {
+            table.appendChild(rows[i]);
+        }
+
+        isInverse = true;
+    }
+    
     function getFactor(size)
     {
         //Si es Gigabyte
