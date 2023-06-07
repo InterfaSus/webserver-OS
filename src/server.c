@@ -12,7 +12,6 @@
 #include "constants.h"
 #include "string_helpers.h"
 
-char *main_directory;
 int sockfd;
 
 void sigint_handler(int sig) {
@@ -23,8 +22,6 @@ void sigint_handler(int sig) {
 }
 
 int start_server(int port, char *directory) {
-
-    main_directory = directory;
 
     int newsockfd;
     socklen_t clilen;
@@ -111,7 +108,7 @@ int start_server(int port, char *directory) {
 
             char response[MAX_PAGE_SIZE];
             FILE *file;
-            int isDownload = router(main_directory, path, response);
+            int isDownload = router(directory, path, response);
 
             // Enviar la respuesta básica al cliente
             write(newsockfd, response, strlen(response));
@@ -120,7 +117,7 @@ int start_server(int port, char *directory) {
             if (isDownload >= 1) {
 
                 char file_dir[MAX_FILE_ROUTE];
-                sprintf(file_dir, "%s%s", isDownload == 1 ? main_directory : "./public", path);
+                sprintf(file_dir, "%s%s", isDownload == 1 ? directory : "./public", path);
                 urlDecode(file_dir);
 
                 FILE *file = fopen(file_dir, "rb");
